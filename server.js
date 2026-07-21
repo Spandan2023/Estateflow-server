@@ -5,6 +5,7 @@ import employeeRoutes from "./routes/employeeRoutes.js";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import propertyRoutes from "./routes/propertyRoutes.js";
+import inquiryRoutes from "./routes/inquiryRoutes.js";
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api/auth", authRoutes);
 app.use("/api/properties", propertyRoutes);
 app.use("/api/employees", employeeRoutes);
+app.use("/api/inquiries", inquiryRoutes);
 
 app.get("/", (req, res) => {
   res.send("EstateFlow API Running...");
