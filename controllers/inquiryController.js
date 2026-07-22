@@ -9,14 +9,7 @@ const isAdmin = (user) => user?.role === "admin";
 // ==========================================
 export const createInquiry = async (req, res) => {
   try {
-    const {
-      customerName,
-      phone,
-      email,
-      message,
-      source,
-      property,
-    } = req.body;
+    const { customerName, phone, email, message, source, property } = req.body;
 
     if (!customerName || !phone || !message || !source) {
       return res.status(400).json({
@@ -30,7 +23,6 @@ export const createInquiry = async (req, res) => {
       });
     }
 
-    // Property inquiry must contain a valid property id
     if (source === "property") {
       if (!property) {
         return res.status(400).json({
@@ -68,6 +60,35 @@ export const createInquiry = async (req, res) => {
 };
 
 // ==========================================
+// Employee - Get My Assigned Inquiries
+// ==========================================
+export const getMyInquiries = async (req, res) => {
+  try {
+    if (req.user?.role !== "employee") {
+      return res.status(403).json({
+        message: "Only employees can view assigned inquiries.",
+      });
+    }
+
+    const inquiries = await Inquiry.find({
+      assignedEmployee: req.user._id,
+    })
+      .populate("property", "title city address price priceRange")
+      .populate("assignedBy", "fullName employeeId")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      count: inquiries.length,
+      inquiries,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// ==========================================
 // Admin - Get All Inquiries
 // ==========================================
 export const getAllInquiries = async (req, res) => {
@@ -80,14 +101,8 @@ export const getAllInquiries = async (req, res) => {
 
     const inquiries = await Inquiry.find()
       .populate("property", "title city price")
-      .populate(
-        "assignedEmployee",
-        "fullName employeeId email"
-      )
-      .populate(
-        "assignedBy",
-        "fullName employeeId"
-      )
+      .populate("assignedEmployee", "fullName employeeId email")
+      .populate("assignedBy", "fullName employeeId")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -114,14 +129,8 @@ export const getInquiryById = async (req, res) => {
 
     const inquiry = await Inquiry.findById(req.params.id)
       .populate("property")
-      .populate(
-        "assignedEmployee",
-        "fullName employeeId email phone"
-      )
-      .populate(
-        "assignedBy",
-        "fullName employeeId"
-      );
+      .populate("assignedEmployee", "fullName employeeId email phone")
+      .populate("assignedBy", "fullName employeeId");
 
     if (!inquiry) {
       return res.status(404).json({
@@ -140,7 +149,7 @@ export const getInquiryById = async (req, res) => {
 };
 
 // ==========================================
-// Admin - Assign Employee
+// Admin - Assign Inquiry to Employee
 // ==========================================
 export const assignInquiry = async (req, res) => {
   try {
@@ -166,7 +175,6 @@ export const assignInquiry = async (req, res) => {
       });
     }
 
-    // Verify employee exists
     const employee = await User.findById(assignedEmployee);
 
     if (!employee) {
@@ -175,14 +183,18 @@ export const assignInquiry = async (req, res) => {
       });
     }
 
-    // Ensure selected user is actually an employee
     if (employee.role !== "employee") {
       return res.status(400).json({
         message: "Selected user is not an employee.",
       });
     }
 
-    // Assign inquiry
+    if (employee.status !== "Active") {
+      return res.status(400).json({
+        message: "Only active employees can receive inquiries.",
+      });
+    }
+
     inquiry.assignedEmployee = employee._id;
     inquiry.assignedBy = req.user._id;
     inquiry.status = "assigned";
@@ -205,7 +217,7 @@ export const assignInquiry = async (req, res) => {
 };
 
 // ==========================================
-// Admin - Update Status
+// Admin - Update Inquiry Status
 // ==========================================
 export const updateInquiryStatus = async (req, res) => {
   try {

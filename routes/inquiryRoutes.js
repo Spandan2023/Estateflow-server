@@ -4,6 +4,7 @@ import {
   createInquiry,
   getAllInquiries,
   getInquiryById,
+  getMyInquiries,
   assignInquiry,
   updateInquiryStatus,
   deleteInquiry,
@@ -14,29 +15,30 @@ import protect from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 // ===============================
-// Public Routes
+// Public Route
 // ===============================
 
-// Landing page & Property page inquiry form
 router.post("/", createInquiry);
+
+// ===============================
+// Employee Route
+// Must appear BEFORE "/:id"
+// ===============================
+
+router.get("/my", protect, getMyInquiries);
 
 // ===============================
 // Admin Routes
 // ===============================
 
-// View all inquiries
 router.get("/", protect, getAllInquiries);
 
-// View single inquiry
 router.get("/:id", protect, getInquiryById);
 
-// Assign inquiry to an employee
 router.patch("/:id/assign", protect, assignInquiry);
 
-// Update inquiry status
 router.patch("/:id/status", protect, updateInquiryStatus);
 
-// Delete inquiry
 router.delete("/:id", protect, deleteInquiry);
 
 export default router;
