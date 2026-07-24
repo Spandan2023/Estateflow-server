@@ -33,22 +33,16 @@ const normalizeMedia = (media) => {
 
 const getUploadedMedia = (req, existingMedia = null) => {
   const media = normalizeMedia(req.body.media || existingMedia);
-  const baseUrl = `${req.protocol}://${req.get("host")}`;
-
   const uploadedImages = (req.files?.images || []).map((file) => ({
-    url: `${baseUrl}/uploads/${file.filename}`,
+    filename: file.filename,
     publicId: file.filename,
   }));
 
   const uploadedVideo = req.files?.video?.[0];
 
-  if (uploadedImages.length > 0) {
-    media.images = uploadedImages;
-  }
-
   if (uploadedVideo) {
     media.video = {
-      url: `${baseUrl}/uploads/${uploadedVideo.filename}`,
+      filename: uploadedVideo.filename,
       publicId: uploadedVideo.filename,
     };
   }
@@ -258,8 +252,7 @@ export const getPropertyById = async (req, res) => {
     }
 
     const isPublicProperty =
-      property.approvalStatus === "approved" &&
-      property.status === "available";
+      property.approvalStatus === "approved" && property.status === "available";
 
     if (!isPublicProperty) {
       return res.status(404).json({
@@ -324,7 +317,7 @@ export const updateProperty = async (req, res) => {
     if (city !== undefined) property.city = city;
     if (address !== undefined) property.address = address;
     if (price !== undefined) property.price = price;
-    if (priceRange !==undefined) property.priceRange = priceRange;
+    if (priceRange !== undefined) property.priceRange = priceRange;
     if (mapsLink !== undefined) property.mapsLink = mapsLink;
     if (owner) property.owner = owner;
 
